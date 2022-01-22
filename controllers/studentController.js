@@ -2,7 +2,13 @@ const { Student, Course } = require('../models');
 
 // TODO: Create an aggregate function to get the number of students overall
 const headCount = async () =>
-  Student.aggregate()
+  Student.aggregate(
+    [
+      {
+        $count: 'headCount',
+      }
+    ]
+  )
     // Your code here
     .then((numberOfStudents) => numberOfStudents);
 
@@ -14,6 +20,10 @@ const grade = async (studentId) =>
     },
     {
       // Your code here
+      $group: {
+        _id: null,
+        grade: { $avg: '$assignments.score' }
+      }
     },
   ]);
 
@@ -42,9 +52,9 @@ module.exports = {
         !student
           ? res.status(404).json({ message: 'No student with that ID' })
           : res.json({
-              student,
-              grade: await grade(req.params.studentId),
-            })
+            student,
+            grade: await grade(req.params.studentId),
+          })
       )
       .catch((err) => {
         console.log(err);
@@ -64,16 +74,16 @@ module.exports = {
         !student
           ? res.status(404).json({ message: 'No such student exists' })
           : Course.findOneAndUpdate(
-              { students: req.params.studentId },
-              { $pull: { students: req.params.studentId } },
-              { new: true }
-            )
+            { students: req.params.studentId },
+            { $pull: { students: req.params.studentId } },
+            { new: true }
+          )
       )
       .then((course) =>
         !course
           ? res.status(404).json({
-              message: 'Student deleted, but no courses found',
-            })
+            message: 'Student deleted, but no courses found',
+          })
           : res.json({ message: 'Student successfully deleted' })
       )
       .catch((err) => {
@@ -94,8 +104,8 @@ module.exports = {
       .then((student) =>
         !student
           ? res
-              .status(404)
-              .json({ message: 'No student found with that ID :(' })
+            .status(404)
+            .json({ message: 'No student found with that ID :(' })
           : res.json(student)
       )
       .catch((err) => res.status(500).json(err));
@@ -110,8 +120,8 @@ module.exports = {
       .then((student) =>
         !student
           ? res
-              .status(404)
-              .json({ message: 'No student found with that ID :(' })
+            .status(404)
+            .json({ message: 'No student found with that ID :(' })
           : res.json(student)
       )
       .catch((err) => res.status(500).json(err));
